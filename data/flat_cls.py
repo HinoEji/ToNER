@@ -45,7 +45,8 @@ def ner_t5_data_format(fout, item, schemas, mode='train'):
     entity_desc = [x + ": " + get_entity_type_desc(data_type)[x] for x in schemas]
     query, score = get_topk(recall_model, item["text"], entity_desc, len(entity_desc), 0.95)
     query = [x.split(": ")[0] for x in query]
-    input = "List all named entities of the type [{}].\nText: {}\nEntities of type [{}] may exist in text".format(", ".join(schemas), item["text"], ", ".join(query))
+    # input = "List all named entities of the type [{}].\nText: {}\nEntities of type [{}] may exist in text".format(", ".join(schemas), item["text"], ", ".join(query))
+    input = "Liệt kê tất cả các thực thể / đoạn thuộc các chủ đề sau [{}].\nVăn bản: {}\nCác thực thể thuộc chủ đề  [{}] có thể tồn tại trong văn bản".format(", ".join(schemas), item["text"], ", ".join(query))
     target = []
     for label in item["label"]:
         target.append("({}, {})".format(label["name"], label["value"]))
@@ -62,7 +63,8 @@ def ner_t5_data_format(fout, item, schemas, mode='train'):
     fout.write(json.dumps(item, ensure_ascii=False) + "\n")
 
 def auxiliary_t5_data_format(fout, item, schemas):
-    input = "List all entity types in the text of the type [{}].\nText: {}".format(", ".join(schemas), item["text"])
+    # input = "List all entity types in the text of the type [{}].\nText: {}".format(", ".join(schemas), item["text"])
+    input = "Liệt kê tất cả đoạn / thực thể xuất hiện trong văn bản thuộc các chủ đề sau [{}].\nVăn bản: {}".format(", ".join(schemas), item["text"])
 
     target = []
     for label in item["label"]:

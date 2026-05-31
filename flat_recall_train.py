@@ -8,10 +8,11 @@ from sentence_transformers import SentenceTransformer
 from datasets import Dataset, DatasetDict, load_from_disk
 from uniem.finetuner import FineTuner
 from collections import defaultdict
+from argparse import ArgumentParser
 
 from utils.flat import get_tag_map, get_keys, get_entity_type_desc
 
-MODEL_PATH = "./gte-large" # thenlper/gte-large
+MODEL_PATH = "BAAI/bge-m3" # thenlper/gte-large
 DATA_PATH = "./data/my_data"
 random.seed(7777)
 
@@ -80,12 +81,18 @@ def get_topk(model, input, keys, topk):
     return [keys[i] for i in topk_indices]
 
 if __name__ == "__main__":
-    dataset = load_train_data(DATA_PATH)
-    print(dataset)
-    # finetuner = FineTuner.from_pretrained(MODEL_PATH, dataset=load_train_data(DATA_PATH))
-    # finetuner.run(
-    #     epochs=1, 
-    #     output_dir=f"./tmp/",
-    #     batch_size=16,
-    #     shuffle=True
-    # )
+    args = ArgumentParser()
+    args.add_argument("--data_path", type=str, default=DATA_PATH)
+    args.add_argument("--model_path", type=str, default=MODEL_PATH)
+    args.add_argument("--batch_size", type=int, default=16)
+    args.add_argument("--output_dir", type=str, default="./tmp/")
+    args = args.parse_args()
+    dataset = load_train_data(args.data_path)
+    # print(dataset)
+    finetuner = FineTuner.from_pretrained(args.model_path, dataset=load_train_data(args.data_path))
+    finetuner.run(
+        epochs=1, 
+        output_dir=args.output_dir,
+        batch_size=args.batch_size,
+        shuffle=True
+    )
