@@ -12,7 +12,7 @@ from collections import defaultdict
 from utils.flat import get_tag_map, get_keys, get_entity_type_desc
 
 MODEL_PATH = "./gte-large" # thenlper/gte-large
-DATA_PATH = "./data/conll2003"
+DATA_PATH = "./data/my_data"
 random.seed(7777)
 
 def process(raw_data, mode="train", data_type="WNUT2017"):
@@ -80,10 +80,12 @@ def get_topk(model, input, keys, topk):
     return [keys[i] for i in topk_indices]
 
 if __name__ == "__main__":
-    finetuner = FineTuner.from_pretrained(MODEL_PATH, dataset=load_train_data(DATA_PATH))
-    finetuner.run(
-        epochs=1, 
-        output_dir=f"./tmp/",
-        batch_size=16,
-        shuffle=True
-    )
+    dataset = load_train_data(DATA_PATH)
+    print(dataset)
+    # finetuner = FineTuner.from_pretrained(MODEL_PATH, dataset=load_train_data(DATA_PATH))
+    # finetuner.run(
+    #     epochs=1, 
+    #     output_dir=f"./tmp/",
+    #     batch_size=16,
+    #     shuffle=True
+    # )

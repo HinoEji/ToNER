@@ -89,6 +89,29 @@ def get_tag_map(data_type):
             35: "I-ORDINAL",
             36: "I-LANGUAGE"
         }
+    elif data_type == 'my_data':
+        tag_map = {
+            0: 'O',
+            1: 'B-PRODUCT',
+            2: 'I-PRODUCT',
+            3: 'B-GENERAL',
+            4: 'I-GENERAL',
+            5: 'B-SERVICE',
+            6: 'I-SERVICE',
+            7: 'B-PRODUCT FEATURE',
+            8: 'I-PRODUCT FEATURE',
+            9: 'B-PRODUCT USAGE',
+            10: 'I-PRODUCT USAGE',
+            11: 'B-PRODUCT DESIGN',
+            12: 'I-PRODUCT DESIGN',
+            13: 'B-PRODUCT QUALITY',
+            14: 'I-PRODUCT QUALITY',
+            15: 'B-PRICE',
+            16: 'I-PRICE',
+            17: 'B-DELIVERY',
+            18: 'I-DELIVERY',
+
+        }
     else:
         tag_map = {
             0: 'O', 
@@ -149,4 +172,17 @@ def get_entity_type_desc(data_type):
             "ordinal": '"first", "second".',
             "cardinal": "Numerals that do not fall under another type."
         }
+    elif data_type == 'my_data':
+        entity_type_desc = {
+            "general": "Những câu thuộc chủ đề chung chung, chứa các aspect ngầm",
+            "product": "Những câu thuộc chủ đề liên quan đến sản phẩm nói chung nhưng không rõ ràng về phía cạnh nào",
+            "service": "Những câu có chủ đề liên quan tới dịch vụ nói chung , thái độ của nhân viên , các chương trình đặc biệt",
+            "delivery": "Những câu có liên quan đến giao hàng , đóng gói , vận chuyển",
+            "price": "Những câu có liên quan đến giá cả của sản phẩm",
+            "product feature" : "Những câu nói về những đặc trưng tự nhiên , đặc điểm vốn có của sản phẩm",
+            "product usage" : "Những câu nói về công dụng của sản phẩm , cảm nhận trong quá trình sử dụng sản phẩm",
+            "product design" : "Những câu liên quan đến bao bì , màu săc , thiết kế của sản phẩm",
+            "product quality" : "Những câu liên quan đến chất lượng của sản phẩm , độ bền , độ hoàn thiện của sản phẩm"
+        }
+
     return entity_type_desc

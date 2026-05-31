@@ -1,0 +1,21 @@
+{
+            "O": 0,
+            "B-PRODUCT": 1,
+            "I-PRODUCT": 2,
+            "B-GENERAL": 3,
+            "I-GENERAL": 4,
+            "B-SERVICE": 5,
+            "I-SERVICE": 6,
+            "B-PRODUCT FEATURE": 7,
+            "I-PRODUCT FEATURE": 8,
+            "B-PRODUCT USAGE": 9,
+            "I-PRODUCT USAGE": 10,
+            "B-PRODUCT DESIGN": 11,
+            "I-PRODUCT DESIGN": 12,
+            "B-PRODUCT QUALITY": 13,
+            "I-PRODUCT QUALITY": 14,
+            "B-PRICE": 15,
+            "I-PRICE": 16,
+            "B-DELIVERY": 17,
+            "I-DELIVERY": 18
+}
