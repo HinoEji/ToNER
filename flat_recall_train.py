@@ -7,7 +7,7 @@ from sentence_transformers import (
     SentenceTransformerTrainer,
     SentenceTransformerTrainingArguments
 )
-from sentence_transformers.losses import TripletLoss
+from sentence_transformers.sentence_transformer.losses import TripletLoss
 
 from utils.flat import (
     get_tag_map,
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch_size",
         type=int,
-        default=16
+        default=2
     )
 
     parser.add_argument(
@@ -161,7 +161,7 @@ if __name__ == "__main__":
         warmup_ratio=0.1,
         fp16=True,
         remove_unused_columns=False,
-        save_total_limit=2,
+        save_total_limit=1,
     )
 
     trainer = SentenceTransformerTrainer(
