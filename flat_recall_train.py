@@ -7,7 +7,7 @@ from sentence_transformers import (
     SentenceTransformerTrainer,
     SentenceTransformerTrainingArguments
 )
-from sentence_transformers.sentence_transformer.losses import TripletLoss
+from from sentence_transformers.losses import TripletLoss
 
 from utils.flat import (
     get_tag_map,
