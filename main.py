@@ -203,7 +203,7 @@ def validate(args, tokenizer, model, val_dataloader, accelerator):
                 input_ids=ids,
                 attention_mask=mask,
                 max_length=MAX_TEXT_LENGTH // 2,
-                synced_gpus=True
+                synced_gpus=False
             )
 
             generated_ids = accelerator.pad_across_processes(generated_ids, dim=1)
@@ -358,7 +358,6 @@ if __name__ == "__main__":
         train(args, epoch, tokenizer, model, progress_bar, train_dataloader, optimizer, lr_scheduler, accelerator)
 
         accelerator.wait_for_everyone()
-        if epoch < 10: continue
         if accelerator.is_local_main_process:
             print("Validation...")
         f1 = validate(args, tokenizer, model, val_dataloader, accelerator)
