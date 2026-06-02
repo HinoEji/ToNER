@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 from transformers import T5Tokenizer, T5ForConditionalGeneration, get_scheduler
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from accelerate import Accelerator
 from datasets import load_dataset
 from tqdm import tqdm
@@ -16,8 +17,8 @@ from tqdm import tqdm
 from utils.tag_map import get_tag_map, get_keys
 
 MAX_TEXT_LENGTH = 512
-MODEL_PATH = "./flan-t5-xl" # backbone model path 
-DATA_TYPE = "ACE2005" # dataset type
+MODEL_PATH = "vinai/bartpho-syllable" # backbone model path 
+DATA_TYPE = "my_data" # dataset type
 tag_map = get_tag_map(DATA_TYPE.split("/")[-1])
 KEYS = get_keys(DATA_TYPE.split("/")[-1])
 
@@ -47,7 +48,7 @@ def get_val_dataset(file_name):
 
 def prepare_features(example):
     global MODEL_PATH, DATA_TYPE
-    tokenizer = T5Tokenizer.from_pretrained(MODEL_PATH)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
     features = {
         "source_ids": [], 
         "source_mask": [], 
@@ -176,7 +177,7 @@ def train(args, epoch, tokenizer, model, progress_bar, train_dataloader, optimiz
         cls_loss = compute_cls_loss(model.linear_layer(cls_embedding), data["cls_label"])
         if index % 100 == 0 and index != 0 and accelerator.is_local_main_process:
             print(
-                index, "epoch:" + str(epoch) + "-loss1:" + str(loss) + "-cls_loss:" + str(cls_loss)
+                index, "epoch:" + str(epoch) + "-loss1:" + str(loss) + "-cls_loss:" + str(cls_loss) 
             )
         
         accelerator.backward(loss + cls_loss)
@@ -296,21 +297,25 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, default=MODEL_PATH)
     parser.add_argument("--data_type", type=str, default=DATA_TYPE)
     parser.add_argument("--output_path", type=str, default="./{}/{}/".format(DATA_TYPE, MODEL_PATH.split("/")[-1]))
-    parser.add_argument("--train_data_path", type=str, default=f"./data/{DATA_TYPE}/train.json")
-    parser.add_argument("--val_data_path", type=str, default=f"./data/{DATA_TYPE}/test.json")
+    parser.add_argument("--train_data_path", type=str, default=f"./data/{DATA_TYPE}/train_recall_cls.json")
+    parser.add_argument("--val_data_path", type=str, default=f"./data/{DATA_TYPE}/valid_recall_cls.json")
+    parser.add_argument("--test_data_path", type=str, default=f"./data/{DATA_TYPE}/test_recall_cls.json")
     
     parser.add_argument("--learning_rate", type=float, default=3e-5)
     parser.add_argument("--epoch", type=int, default=30)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--seed", type=int, default=4396)
 
+
     args = parser.parse_args()
     set_seed(args.seed)
 
+    MODEL_PATH = args.model_path
+
     accelerator = Accelerator(split_batches=True)
 
-    tokenizer = T5Tokenizer.from_pretrained(MODEL_PATH)
-    model = T5ForConditionalGeneration.from_pretrained(MODEL_PATH)
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
+    model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_PATH, trust_remote_code=True)
     model.resize_token_embeddings(len(tokenizer))
     device = accelerator.device
     model.to(device)
@@ -332,6 +337,9 @@ if __name__ == "__main__":
     val_dataset = get_val_dataset(args.val_data_path)
     val_dataloader = DataLoader(val_dataset, batch_size=2*args.batch_size, shuffle=False, collate_fn=test_collate_fn)
 
+    test_dataset = get_val_dataset(args.test_data_path)
+    test_dataloader = DataLoader(test_dataset, batch_size=2*args.batch_size, shuffle=False, collate_fn=test_collate_fn)
+
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
     lr_scheduler = get_scheduler(
         name="linear", optimizer=optimizer, num_warmup_steps=int(0.1 * total_train_steps), num_training_steps=total_train_steps
@@ -341,6 +349,7 @@ if __name__ == "__main__":
         model, optimizer, train_dataloader, lr_scheduler
     )
     val_dataloader = accelerator.prepare(val_dataloader)
+    test_dataloader = accelerator.prepare(test_dataloader)
 
     progress_bar = tqdm(range(total_train_steps), disable=not accelerator.is_local_main_process)
 
@@ -357,4 +366,18 @@ if __name__ == "__main__":
             best_f1 = f1
             accelerator.print('[Saving Model]...')
             save_model(args, model, accelerator, tokenizer)
+
+    accelerator.wait_for_everyone()
+    best_ckpt_path = os.path.join(args.output_path, "pytorch_model.bin")
+    if os.path.exists(best_ckpt_path):
+        if accelerator.is_local_main_process:
+            print("[Loading Best Model]...")
+        state_dict = torch.load(best_ckpt_path, map_location=accelerator.device)
+        accelerator.unwrap_model(model).load_state_dict(state_dict)
+        accelerator.wait_for_everyone()
+        if accelerator.is_local_main_process:
+            print("Testing with best model...")
+        validate(args, tokenizer, model, test_dataloader, accelerator)
+    elif accelerator.is_local_main_process:
+        print(f"[Skip Testing] Best model not found at {best_ckpt_path}")
 
