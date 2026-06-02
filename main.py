@@ -351,7 +351,7 @@ if __name__ == "__main__":
         model, optimizer, train_dataloader, lr_scheduler
     )
     val_dataloader = accelerator.prepare(val_dataloader)
-    test_dataloader = accelerator.prepare(test_dataloader)
+    # test_dataloader = accelerator.prepare(test_dataloader)
 
     progress_bar = tqdm(range(total_train_steps), disable=not accelerator.is_local_main_process)
 
