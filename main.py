@@ -202,7 +202,7 @@ def validate(args, tokenizer, model, val_dataloader, accelerator):
             generated_ids = accelerator.unwrap_model(model).generate(
                 input_ids=ids,
                 attention_mask=mask,
-                max_length=MAX_TEXT_LENGTH // 2,
+                max_length=MAX_TEXT_LENGTH,
                 synced_gpus=False
             )
 
@@ -299,7 +299,8 @@ if __name__ == "__main__":
     parser.add_argument("--output_path", type=str, default="./{}/{}/".format(DATA_TYPE, MODEL_PATH.split("/")[-1]))
     parser.add_argument("--train_data_path", type=str, default=f"./data/{DATA_TYPE}/train_recall_cls.json")
     parser.add_argument("--val_data_path", type=str, default=f"./data/{DATA_TYPE}/valid_recall_cls.json")
-    parser.add_argument("--test_data_path", type=str, default=f"./data/{DATA_TYPE}/test_recall_cls.json")
+    # parser.add_argument("--test_data_path", type=str, default=f"./data/{DATA_TYPE}/test_recall_cls.json")
+    parser.add_argument("--max_text_length", type=int, default=MAX_TEXT_LENGTH)
     
     parser.add_argument("--learning_rate", type=float, default=3e-5)
     parser.add_argument("--epoch", type=int, default=30)
@@ -311,6 +312,7 @@ if __name__ == "__main__":
     set_seed(args.seed)
 
     MODEL_PATH = args.model_path
+    MAX_TEXT_LENGTH = args.max_text_length
 
     accelerator = Accelerator(split_batches=True)
 
@@ -337,8 +339,8 @@ if __name__ == "__main__":
     val_dataset = get_val_dataset(args.val_data_path)
     val_dataloader = DataLoader(val_dataset, batch_size=2*args.batch_size, shuffle=False, collate_fn=test_collate_fn)
 
-    test_dataset = get_val_dataset(args.test_data_path)
-    test_dataloader = DataLoader(test_dataset, batch_size=2*args.batch_size, shuffle=False, collate_fn=test_collate_fn)
+    # test_dataset = get_val_dataset(args.test_data_path)
+    # test_dataloader = DataLoader(test_dataset, batch_size=2*args.batch_size, shuffle=False, collate_fn=test_collate_fn)
 
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
     lr_scheduler = get_scheduler(
@@ -366,17 +368,17 @@ if __name__ == "__main__":
             accelerator.print('[Saving Model]...')
             save_model(args, model, accelerator, tokenizer)
 
-    accelerator.wait_for_everyone()
-    best_ckpt_path = os.path.join(args.output_path, "pytorch_model.bin")
-    if os.path.exists(best_ckpt_path):
-        if accelerator.is_local_main_process:
-            print("[Loading Best Model]...")
-        state_dict = torch.load(best_ckpt_path, map_location=accelerator.device)
-        accelerator.unwrap_model(model).load_state_dict(state_dict)
-        accelerator.wait_for_everyone()
-        if accelerator.is_local_main_process:
-            print("Testing with best model...")
-        validate(args, tokenizer, model, test_dataloader, accelerator)
-    elif accelerator.is_local_main_process:
-        print(f"[Skip Testing] Best model not found at {best_ckpt_path}")
+    # accelerator.wait_for_everyone()
+    # best_ckpt_path = os.path.join(args.output_path, "pytorch_model.bin")
+    # if os.path.exists(best_ckpt_path):
+    #     if accelerator.is_local_main_process:
+    #         print("[Loading Best Model]...")
+    #     state_dict = torch.load(best_ckpt_path, map_location=accelerator.device)
+    #     accelerator.unwrap_model(model).load_state_dict(state_dict)
+    #     accelerator.wait_for_everyone()
+    #     if accelerator.is_local_main_process:
+    #         print("Testing with best model...")
+    #     validate(args, tokenizer, model, test_dataloader, accelerator)
+    # elif accelerator.is_local_main_process:
+    #     print(f"[Skip Testing] Best model not found at {best_ckpt_path}")
 
