@@ -1,6 +1,6 @@
+wrapt==2.1.2
 transformers==4.57.5
-torch
-accelerate
-datasets
-uniem
+torch==2.10.0
+accelerate==1.14.0
+datasets==2.21.0
 seqeval==1.2.2
