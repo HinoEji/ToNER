@@ -3,3 +3,4 @@ torch
 accelerate
 datasets
 uniem
+seqeval==1.2.2

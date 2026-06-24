@@ -12,16 +12,17 @@ from datasets import load_from_disk
 from sentence_transformers import SentenceTransformer
 from utils.flat import get_tag_map, get_entity_type_desc
 from collections import defaultdict
+from seqeval.metrics.sequence_labeling import get_entities
 
 # For flat NER dataset helper function.
 # data: {'tokens': [], 'tags' | 'ner_tags': []}
 
 random.seed(7777)
 rng = random.Random(7777)
-data_type = 'conll2003' # dataset name
+data_type = 'my_data' # dataset name
 
 recall_model = SentenceTransformer(
-    "your_matching_model",
+    "/kaggle/input/models/hinoeiji/toner-typematcher/transformers/bge-m3/1/tmp_bge_m3",
     device="cuda"
 )
 
@@ -101,29 +102,17 @@ def process_2_t5_type(data_path, tag_map):
         pbar = tqdm(total=len(split_dataset))
         for data in split_dataset:
             label = set()
-            begin = 0
             try:
                 tags = data["ner_tags"]
             except:
                 tags = data["tags"]
-            while begin < len(tags):
-                while begin < len(tags) and tags[begin] == 0: begin += 1
-                if begin < len(tags):
-                    end = begin + 1
-                    if end < len(tags):
-                        try:
-                            name = tag_map[tags[begin]][tag_map[tags[begin]].index("-") + 1:].lower()
-                        except:
-                            name = tag_map[tags[begin]].lower()
-                        try:
-                            end_name = tag_map[tags[end]][tag_map[tags[end]].index("-") + 1:].lower()
-                        except:
-                            end_name = tag_map[tags[end]].lower()
-                        while end < len(tags) and tags[end] != 0 and end_name == name:
-                            end += 1
-                    entity = " ".join(data["tokens"][begin:end])
-                    label.add((name, entity))
-                    begin = end
+            tags = [tag_map[x] for x in tags]
+            entities = get_entities(tags)
+            for entity in entities:
+                name = entity[0].lower()
+                entity_text = " ".join(data["tokens"][entity[1]:entity[2]+1])
+                label.add((name, entity_text))
+
             label = [{"name": x[0], "value": x[1]} for x in label]
             item = {"text": " ".join(data["tokens"]), "label": label}
             item = add_sample_id(item, sample_id)
