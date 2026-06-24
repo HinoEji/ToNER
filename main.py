@@ -249,17 +249,38 @@ def validate(args, tokenizer, model, val_dataloader, accelerator):
     return f1
 
 def split2pair(answer, text):
+
     res = []
+
+    if len(answer) < 2:
+        return []
+
     answer = answer[1:-1]
+
     left, right = 0, 0
+
     while right < len(answer):
+
         if answer[right] == "(":
             left = right + 1
+
         elif answer[right] == ")":
-            comma_index = answer[left:right].find(',')
-            t = [answer[left:right][:comma_index].strip(" "), answer[left:right][comma_index+1:].strip(" ")]
+
+            comma_index = answer[left:right].find(",")
+
+            if comma_index == -1:
+                right += 1
+                continue
+
+            t = [
+                answer[left:right][:comma_index].strip(),
+                answer[left:right][comma_index + 1:].strip()
+            ]
+
             res.append((t[0], t[1]))
+
         right += 1
+
     return list(set(res))
 
 def split2pair_exp(answer, text):
